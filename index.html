@@ -191,6 +191,75 @@
     .hook-item:last-child { border-bottom: none; }
 
     .divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+    /* ── DETAIL PAGE REDESIGN ── */
+    .d-header {
+      padding: 20px 32px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .d-identity { flex: 1; min-width: 0; }
+    .d-title { font-size: 21px; font-weight: 800; line-height: 1.25; margin-bottom: 6px; }
+    .d-meta-line { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .d-meta-line strong { color: var(--text); }
+    .d-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .d-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
+
+    .d-stats {
+      display: flex; background: var(--surface2); border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .d-stat {
+      flex: 1; min-width: 80px; padding: 14px 18px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .d-stat:last-child { border-right: none; }
+    .d-stat-val { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .d-stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .d-score-bar { margin-top: 5px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .d-score-bar-fill { height: 100%; border-radius: 2px; }
+
+    .d-dimensions { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 12px; }
+    .d-dim { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 6px; text-align: center; }
+    .d-dim-name { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 3px; }
+    .d-dim-score { font-size: 14px; font-weight: 800; line-height: 1; }
+    .d-dim-max { font-size: 10px; color: var(--muted); }
+
+    .d-body { padding: 20px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .d-body { grid-template-columns: 1fr; } }
+
+    .d-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--accent); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .d-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; }
+    .d-card + .d-card { margin-top: 14px; }
+    .d-text { font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+    .d-score-text { font-size: 12px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; }
+    .d-score-text strong { color: var(--text); }
+
+    .d-top5 { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; }
+    .d-top5-item {
+      padding: 8px 12px; background: var(--surface2); border-radius: 6px;
+      font-size: 12px; line-height: 1.5; border-left: 2px solid var(--accent);
+    }
+
+    .d-marketing { padding: 0 32px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .d-marketing { grid-template-columns: 1fr; } }
+    .d-marketing-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; }
+
+    .d-hook-list { overflow: hidden; border-radius: var(--r); border: 1px solid var(--border); }
+    .d-hook-item {
+      padding: 9px 14px; font-size: 13px; line-height: 1.5;
+      border-left: 3px solid var(--accent); border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .d-hook-item:last-child { border-bottom: none; }
+
+    .d-footer { padding: 16px 32px 28px; border-top: 1px solid var(--border); }
+    .d-meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px,1fr)); gap: 8px; margin-top: 10px; }
+    .d-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+    .d-meta-item-k { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 3px; }
+    .d-meta-item-v { font-size: 12px; color: var(--text); word-break: break-word; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -318,8 +387,8 @@
         };
       });
 
-      // Sort by date descending
-      allSessions.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+      // Sort by start date ascending (earliest first)
+      allSessions.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
       populateLeaders();
       filter();
@@ -451,131 +520,140 @@
     document.getElementById('detailView').style.display = 'block';
 
     const scoreColor = s.sessionScore >= 75 ? 'var(--green)' : s.sessionScore >= 50 ? 'var(--yellow)' : 'var(--red)';
-    const bigAv = avatarImg(s.leaderName, 72, 'border:2px solid var(--border)');
-    const dateFull = s.startDate ? new Date(s.startDate).toLocaleString('en-IN', {day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
     const sc = scoreClass(s.sessionScore);
+    const av = avatarImg(s.leaderName, 60, 'border:2px solid var(--border);flex-shrink:0');
+    const dateFull = s.startDate ? new Date(s.startDate).toLocaleString('en-IN',
+      {day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
 
-    const metaRow = (k,v,link=false) => {
-      if (!v) return '';
-      const val = link ? `<a href="${v}" target="_blank" rel="noopener">Open ↗</a>` : esc(v);
-      return `<div class="meta-row"><span class="meta-k">${k}</span><span class="meta-v">${val}</span></div>`;
-    };
+    // ── Parse dimension scores from SCORES: Coverage=X/30... line
+    let dimHtml = '';
+    const dm = (s.scoreSummary||'').match(/SCORES:\s*Coverage=(\d+)\/30,\s*Depth=(\d+)\/25,\s*Structure=(\d+)\/20,\s*Engagement=(\d+)\/15,\s*Extras=(\d+)\/10/);
+    if (dm) {
+      const dims = [{n:'Coverage',v:+dm[1],m:30},{n:'Depth',v:+dm[2],m:25},{n:'Structure',v:+dm[3],m:20},{n:'Engagement',v:+dm[4],m:15},{n:'Extras',v:+dm[5],m:10}];
+      const dc = p => p>=70?'var(--green)':p>=45?'var(--yellow)':'var(--red)';
+      dimHtml = `<div class="d-dimensions">${dims.map(d=>{const p=Math.round(d.v/d.m*100);return `<div class="d-dim"><div class="d-dim-name">${d.n}</div><div class="d-dim-score" style="color:${dc(p)}">${d.v}</div><div class="d-dim-max">/${d.m}</div></div>`;}).join('')}</div>`;
+    }
 
-    const hookHtml = s.hookLines
-      ? '<div class="hook-card">' + s.hookLines.split('\n').filter(l=>l.trim()).map(l=>`<div class="hook-item">${esc(l.replace(/^\d+\.\s*/,''))}</div>`).join('') + '</div>'
+    // ── Score summary text — strip SCORES line, bold section labels
+    let scoreSummaryHtml = '';
+    if (s.scoreSummary) {
+      scoreSummaryHtml = esc(s.scoreSummary.replace(/SCORES:[^|]+\|\s*/,'').trim())
+        .replace(/PROMISED:/g,  '<strong style="color:var(--text)">Promised:</strong>')
+        .replace(/DELIVERED:/g, '<strong style="color:var(--text)">Delivered:</strong>')
+        .replace(/GAPS:/g,      '<strong style="color:var(--text)">Gaps:</strong>')
+        .replace(/RATIONALE:/g, '<strong style="color:var(--text)">Rationale:</strong>')
+        .replace(/\|/g, '<br>');
+    }
+
+    // ── Top 5 list
+    const top5Html = s.chatTop5
+      ? `<div class="d-top5">${s.chatTop5.split('\n').filter(l=>l.trim()).map(l=>`<div class="d-top5-item">${esc(l.replace(/^\d+\.\s*/,''))}</div>`).join('')}</div>`
       : '';
 
-    const tagChips = s.sessionTags
-      ? s.sessionTags.split(',').map(t=>`<span class="chip chip-accent">${esc(t.trim())}</span>`).join('')
+    // ── Hook lines
+    const hooksHtml = s.hookLines
+      ? `<div class="d-hook-list">${s.hookLines.split('\n').filter(l=>l.trim()).map(l=>`<div class="d-hook-item">${esc(l.replace(/^\d+\.\s*/,''))}</div>`).join('')}</div>`
       : '';
+
+    // ── Tag chips
+    const tagChips = [
+      s.primaryTag ? `<span class="chip chip-accent">${esc(s.primaryTag)}</span>` : '',
+      ...(s.sessionTags ? s.sessionTags.split(',').map(t=>`<span class="chip">${esc(t.trim())}</span>`) : []),
+      ...(s.l1Tags ? s.l1Tags.split(',').map(t=>`<span class="chip">${esc(t.trim())}</span>`) : []),
+    ].filter(Boolean).join('');
+
+    // ── Metadata item helper
+    const mi = (k,v) => v ? `<div class="d-meta-item"><div class="d-meta-item-k">${k}</div><div class="d-meta-item-v">${esc(String(v))}</div></div>` : '';
 
     document.getElementById('detailContent').innerHTML = `
-      <!-- Hero -->
-      <div class="detail-hero">
-        ${bigAv}
-        <div class="hero-info">
-          <div class="hero-title">${esc(s.sessionName)||'(No name)'}</div>
-          <div class="hero-sub">
+
+      <!-- Zone 1: Identity -->
+      <div class="d-header">
+        ${av}
+        <div class="d-identity">
+          <div class="d-title">${esc(s.sessionName)||'(No name)'}</div>
+          <div class="d-meta-line">
             <strong>${esc(s.leaderName)}</strong>
-            <span>${dateFull}</span>
-            ${s.durationMins ? `<span>⏱ ${s.durationMins} min</span>` : ''}
-            ${s.attendedUsers ? `<span>👥 ${s.attendedUsers} attended</span>` : ''}
-            ${s.pdpPrice ? `<span>₹${esc(s.pdpPrice)}</span>` : ''}
+            <span>·</span><span>${dateFull}</span>
+            ${s.pdpPrice ? `<span>· ₹${esc(s.pdpPrice)}</span>` : ''}
           </div>
-          <div class="hero-chips">
-            ${s.primaryTag ? `<span class="chip chip-accent">${esc(s.primaryTag)}</span>` : ''}
-            ${s.l1Tags ? s.l1Tags.split(',').map(t=>`<span class="chip">${esc(t.trim())}</span>`).join('') : ''}
-            <span class="score-pill ${sc}" style="margin-left:4px">${s.sessionScore || '—'}</span>
+          <div class="d-tags">
+            ${tagChips}
+            ${s.sessionScore ? `<span class="score-pill ${sc}" style="margin-left:4px">${s.sessionScore}</span>` : ''}
           </div>
-          <div class="hero-links">
-            ${s.sessionLink ? `<a href="${s.sessionLink}" target="_blank" rel="noopener" class="hero-link">🌐 Session Page</a>` : ''}
-            ${s.transcriptLink ? `<a href="${s.transcriptLink}" target="_blank" rel="noopener" class="hero-link">📄 Transcript</a>` : ''}
-            ${s.chatLink ? `<a href="${s.chatLink}" target="_blank" rel="noopener" class="hero-link">💬 Chat</a>` : ''}
-          </div>
+        </div>
+        <div class="d-actions">
+          ${s.sessionLink    ? `<a href="${s.sessionLink}"    target="_blank" rel="noopener" class="hero-link">🌐 Session Page</a>`  : ''}
+          ${s.transcriptLink ? `<a href="${s.transcriptLink}" target="_blank" rel="noopener" class="hero-link">📄 Transcript</a>`     : ''}
+          ${s.chatLink       ? `<a href="${s.chatLink}"       target="_blank" rel="noopener" class="hero-link">💬 Chat</a>`           : ''}
         </div>
       </div>
 
-      <!-- Score bar -->
-      ${s.sessionScore ? `
-      <div class="detail-score-bar">
-        <span class="big-score" style="color:${scoreColor}">${s.sessionScore}</span>
+      <!-- Zone 2: Stats bar -->
+      <div class="d-stats">
+        ${s.sessionScore ? `<div class="d-stat">
+          <div class="d-stat-val" style="color:${scoreColor}">${s.sessionScore}</div>
+          <div class="d-score-bar"><div class="d-score-bar-fill" style="width:${s.sessionScore}%;background:${scoreColor}"></div></div>
+          <div class="d-stat-label" style="margin-top:5px">Score</div>
+        </div>` : ''}
+        ${s.durationMins  ? `<div class="d-stat"><div class="d-stat-val">${s.durationMins}</div><div class="d-stat-label">Duration (min)</div></div>`    : ''}
+        ${s.attendedUsers ? `<div class="d-stat"><div class="d-stat-val">${s.attendedUsers}</div><div class="d-stat-label">Attended</div></div>`           : ''}
+        ${s.totalRegs     ? `<div class="d-stat"><div class="d-stat-val">${s.totalRegs}</div><div class="d-stat-label">Registered</div></div>`             : ''}
+        ${s.medianDuration? `<div class="d-stat"><div class="d-stat-val">${s.medianDuration}</div><div class="d-stat-label">Median Stay (min)</div></div>` : ''}
+        ${s.avgDuration   ? `<div class="d-stat"><div class="d-stat-val">${s.avgDuration}</div><div class="d-stat-label">Avg Stay (min)</div></div>`       : ''}
+      </div>
+
+      <!-- Zone 3: Analysis (2 columns) -->
+      <div class="d-body">
         <div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:${s.sessionScore}%;background:${scoreColor}"></div></div>
-          <div class="score-label" style="margin-top:4px">Session Score out of 100</div>
-        </div>
-        ${tagChips ? `<div style="margin-left:24px;display:flex;flex-wrap:wrap;gap:6px">${tagChips}</div>` : ''}
-      </div>` : ''}
-
-      <!-- Body -->
-      <div class="detail-body">
-
-        <!-- LEFT: metadata -->
-        <div class="section">
-          <div class="section-title">Session Details</div>
-          <div class="meta-card">
-            <div class="meta-rows">
-              ${metaRow('Instance ID', s.instanceId)}
-              ${metaRow('Session ID (Wise)', s.sessionIdWise)}
-              ${metaRow('Total Registrations', s.totalRegs)}
-              ${metaRow('Attended Users', s.attendedUsers)}
-              ${metaRow('Duration (mins)', s.durationMins)}
-              ${metaRow('Median Duration', s.medianDuration)}
-              ${metaRow('Avg Duration', s.avgDuration)}
-              ${metaRow('PDP Price', s.pdpPrice ? '₹' + s.pdpPrice : '')}
-              ${metaRow('Primary Tag', s.primaryTag)}
-              ${metaRow('L1 Tags', s.l1Tags)}
-              ${metaRow('Tags', s.tags)}
-              ${metaRow('Techniques', s.techniques)}
+          ${s.transcriptSummary ? `
+            <div class="d-section-label">Session Analysis</div>
+            <div class="d-card"><div class="d-text">${esc(s.transcriptSummary)}</div></div>
+          ` : ''}
+          ${s.scoreSummary ? `
+            <div class="d-section-label" style="margin-top:18px">Score Breakdown</div>
+            <div class="d-card">
+              ${dimHtml}
+              <div class="d-score-text">${scoreSummaryHtml}</div>
             </div>
+          ` : ''}
+        </div>
+        <div>
+          ${s.chatSummary ? `
+            <div class="d-section-label">Chat Analysis</div>
+            <div class="d-card">
+              <div class="d-text">${esc(s.chatSummary)}</div>
+              ${top5Html}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Zone 4: Marketing insights (2 columns) -->
+      ${(s.coreMessage||s.painPoints||s.hookLines||s.friendPitch) ? `
+        <div style="padding:0 32px 10px"><div class="d-section-label">Marketing Insights</div></div>
+        <div class="d-marketing">
+          <div>
+            ${s.coreMessage ? `<div class="d-card"><div class="d-marketing-label">Core Message</div><div class="d-text">${esc(s.coreMessage)}</div></div>` : ''}
+            ${s.painPoints  ? `<div class="d-card" style="margin-top:14px"><div class="d-marketing-label">Pain Points</div><div class="d-text">${esc(s.painPoints)}</div></div>` : ''}
+          </div>
+          <div>
+            ${hooksHtml ? `<div style="margin-bottom:14px"><div class="d-marketing-label">Hook Lines</div>${hooksHtml}</div>` : ''}
+            ${s.friendPitch ? `<div class="d-card"><div class="d-marketing-label">Audience Pitch</div><div class="d-text">${esc(s.friendPitch)}</div></div>` : ''}
           </div>
         </div>
+      ` : ''}
 
-        <!-- RIGHT: analysis -->
-        <div class="section">
-
-          ${s.scoreSummary ? `
-          <div>
-            <div class="section-title">Score Summary</div>
-            <div class="text-block">${esc(s.scoreSummary)}</div>
-          </div>` : ''}
-
-          ${s.transcriptSummary ? `
-          <div>
-            <div class="section-title">Transcript Summary</div>
-            <div class="text-block">${esc(s.transcriptSummary)}</div>
-          </div>` : ''}
-
-          ${s.chatSummary ? `
-          <div>
-            <div class="section-title">Chat Summary</div>
-            <div class="text-block">${esc(s.chatSummary)}</div>
-            ${s.chatTop5 ? `<div class="text-block" style="margin-top:8px">${esc(s.chatTop5)}</div>` : ''}
-          </div>` : ''}
-
-          ${s.coreMessage ? `
-          <div>
-            <div class="section-title">Core Message</div>
-            <div class="text-block">${esc(s.coreMessage)}</div>
-          </div>` : ''}
-
-          ${s.painPoints ? `
-          <div>
-            <div class="section-title">Pain Points</div>
-            <div class="text-block">${esc(s.painPoints)}</div>
-          </div>` : ''}
-
-          ${hookHtml ? `
-          <div>
-            <div class="section-title">Hook Lines</div>
-            ${hookHtml}
-          </div>` : ''}
-
-          ${s.friendPitch ? `
-          <div>
-            <div class="section-title">Audience Pitch</div>
-            <div class="text-block">${esc(s.friendPitch)}</div>
-          </div>` : ''}
-
+      <!-- Zone 5: Metadata footer -->
+      <div class="d-footer">
+        <div class="d-section-label">Session Metadata</div>
+        <div class="d-meta-grid">
+          ${mi('Instance ID',    s.instanceId)}
+          ${mi('Wise Session ID',s.sessionIdWise)}
+          ${mi('Primary Tag',    s.primaryTag)}
+          ${mi('L1 Tags',        s.l1Tags)}
+          ${mi('Tags',           s.tags)}
+          ${mi('Techniques',     s.techniques)}
         </div>
       </div>
     `;
