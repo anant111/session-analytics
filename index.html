@@ -257,7 +257,7 @@
     chatTop5:18,sessionTags:19,sessionScore:20,scoreSummary:21,transcriptLink:22,chatLink:23 };
   const M = { instanceId:1, coreMessage:12, painPoints:13, hookLines:14, friendPitch:15 };
 
-  let allSessions = [], filteredSessions = [];
+  let allSessions = [], filteredSessions = [], leaderImageMap = {};
 
   // ── Init
   window.addEventListener('DOMContentLoaded', () => {
@@ -283,10 +283,16 @@
     setTableHtml('<div class="empty-state"><span class="spinner"></span>Fetching sessions…</div>');
 
     try {
-      const [dRows, mRows] = await Promise.all([
+      const [dRows, mRows, lRows] = await Promise.all([
         fetchSheet('Details!A2:X2000', key),
         fetchSheet('Master!A2:P2000', key),
+        fetchSheet('Leaders!A2:B500', key),
       ]);
+
+      // Build leader image map
+      leaderImageMap = {};
+      lRows.forEach(r => { if (r[0] && r[1]) leaderImageMap[r[0]] = r[1]; });
+
       const mMap = {};
       mRows.forEach(r => { if (r[M.instanceId]) mMap[r[M.instanceId]] = r; });
 
@@ -408,12 +414,21 @@
     let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) & 0xffff;
     return COLORS[h % COLORS.length];
   }
-  function avatarImg(name, size) {
-    if (!name) return `<div class="avatar-fallback" style="width:${size}px;height:${size}px;background:#333">?</div>`;
+  function avatarImg(name, size, extraStyle='') {
+    if (!name) return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;flex-shrink:0;${extraStyle}">?</div>`;
     const initials = name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const bg = avatarColor(name);
-    // Try soulsensei CDN from session link; fall back to initials div
-    return `<div class="avatar-fallback" style="width:${size}px;height:${size}px;background:#${bg};font-size:${Math.round(size*0.35)}px">${initials}</div>`;
+    const fs = Math.round(size * 0.35);
+    const fallbackStyle = `width:${size}px;height:${size}px;border-radius:50%;background:#${bg};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;color:#fff;flex-shrink:0;${extraStyle}`;
+    const url = leaderImageMap[name];
+    if (url) {
+      // Real image layered over initials fallback — if img fails to load it hides itself
+      return `<div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0;${extraStyle}">` +
+        `<div style="${fallbackStyle};position:absolute;inset:0;z-index:0">${initials}</div>` +
+        `<img src="${url}" style="width:${size}px;height:${size}px;object-fit:cover;position:relative;z-index:1;border-radius:50%;display:block" onerror="this.style.display='none'" />` +
+        `</div>`;
+    }
+    return `<div style="${fallbackStyle}">${initials}</div>`;
   }
 
   // ── Navigation
@@ -436,7 +451,7 @@
     document.getElementById('detailView').style.display = 'block';
 
     const scoreColor = s.sessionScore >= 75 ? 'var(--green)' : s.sessionScore >= 50 ? 'var(--yellow)' : 'var(--red)';
-    const bigAv = avatarImg(s.leaderName, 72).replace('avatar-fallback','hero-avatar-fallback');
+    const bigAv = avatarImg(s.leaderName, 72, 'border:2px solid var(--border)');
     const dateFull = s.startDate ? new Date(s.startDate).toLocaleString('en-IN', {day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
     const sc = scoreClass(s.sessionScore);
 
